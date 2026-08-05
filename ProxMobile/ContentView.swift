@@ -9,6 +9,8 @@ struct ContentView: View {
         Group {
             if let node = ProcessInfo.processInfo.environment["PROXMOBILE_DISKS_NODE"] {
                 NavigationStack { DiskListView(node: node) }
+            } else if let node = ProcessInfo.processInfo.environment["PROXMOBILE_CHART_NODE"] {
+                NavigationStack { ResourceHistoryView(title: node, basePath: "nodes/\(node)", kind: .node) }
             } else {
                 TabView(selection: $selection) {
                     NavigationStack { OverviewView() }
@@ -311,6 +313,9 @@ private struct ResourceDetailView: View {
                 )
                 if resource.maxdisk != nil {
                     UsageRow(title: "Disk", value: fraction(resource.disk, resource.maxdisk), detail: resource.diskText)
+                }
+                NavigationLink { ResourceHistoryView(resource: resource) } label: {
+                    Label("Performance History", systemImage: "chart.xyaxis.line")
                 }
             }
             Section("Details") {
