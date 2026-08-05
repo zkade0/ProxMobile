@@ -21,7 +21,7 @@ struct ProxmoxResource: Decodable, Identifiable {
     let tags: String?
     let template: Int?
 
-    var title: String { name ?? node ?? id }
+    var title: String { name ?? storage ?? node ?? id }
     var subtitle: String {
         if let vmid { return "\(type.uppercased()) \(vmid)" }
         return type.capitalized
