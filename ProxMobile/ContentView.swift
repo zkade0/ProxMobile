@@ -327,6 +327,9 @@ private struct ResourceDetailView: View {
                     NavigationLink { SnapshotManagerView(resource: resource) } label: { Label("Snapshots", systemImage: "camera.filters") }
                     NavigationLink { BackupGuestView(resource: resource) } label: { Label("Back Up Now", systemImage: "externaldrive.badge.timemachine") }
                     NavigationLink { CloneGuestView(resource: resource) } label: { Label("Clone", systemImage: "plus.square.on.square") }
+                    NavigationLink {
+                        FirewallRulesView(title: "\(resource.title) Firewall", base: "nodes/\(resource.node ?? "")/\(resource.type)/\(resource.vmid ?? 0)/firewall")
+                    } label: { Label("Firewall Rules", systemImage: "shield") }
                     if model.nodes.count > 1 {
                         NavigationLink { MigrateGuestView(resource: resource) } label: { Label("Migrate", systemImage: "arrow.right.circle") }
                     }
@@ -345,15 +348,10 @@ private struct ResourceDetailView: View {
                 Section(section) {
                     ForEach(items.filter { $0.section == section }) { item in
                         NavigationLink {
-                            NativeEndpointView(item: item)
+                            ManagementDestinationView(item: item)
                         } label: { Label(item.title, systemImage: item.icon) }
                     }
                 }
-            }
-            Section("Advanced") {
-                NavigationLink {
-                    APIExplorerView(defaultPath: defaultAPIPath(for: resource))
-                } label: { Label("API Explorer", systemImage: "terminal") }
             }
         }
         .navigationTitle(resource.title)
@@ -414,6 +412,20 @@ private struct ResourceDetailView: View {
                 method: "POST", path: "nodes/\(resource.node ?? resource.title)/status", form: ["command": command]
             )
         } catch { model.errorMessage = error.localizedDescription }
+    }
+}
+
+private struct ManagementDestinationView: View {
+    let item: ManagementItem
+    @ViewBuilder var body: some View {
+        if item.path.hasSuffix("/firewall/rules") {
+            FirewallRulesView(
+                title: item.title,
+                base: String(item.path.dropLast("/rules".count))
+            )
+        } else {
+            NativeEndpointView(item: item)
+        }
     }
 }
 
@@ -565,14 +577,6 @@ private struct SettingsView: View {
                 Text(model.authenticationMode == .password
                      ? "Password is stored in Keychain. Guest actions use a short-lived ticket and CSRF token."
                      : "Token secret is stored in Keychain. Permissions control which views and actions are available.")
-            }
-            Section("Administration") {
-                NavigationLink {
-                    FullWebUIView()
-                } label: { Label("Official Web UI", systemImage: "macwindow") }
-                NavigationLink {
-                    APIExplorerView(defaultPath: "cluster/resources")
-                } label: { Label("Advanced API Explorer", systemImage: "terminal") }
             }
         }
         .navigationTitle("Settings")

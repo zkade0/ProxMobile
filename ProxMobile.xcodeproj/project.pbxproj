@@ -13,6 +13,7 @@
 		A00000000000000000000018 /* SchemaUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000019 /* SchemaUI.swift */; };
 		A00000000000000000000020 /* CreationWizard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000021 /* CreationWizard.swift */; };
 		A00000000000000000000022 /* GuestManagementViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000023 /* GuestManagementViews.swift */; };
+		A00000000000000000000024 /* FirewallViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000025 /* FirewallViews.swift */; };
 		A00000000000000000000016 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000017 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
@@ -25,6 +26,7 @@
 		A00000000000000000000019 /* SchemaUI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SchemaUI.swift; sourceTree = "<group>"; };
 		A00000000000000000000021 /* CreationWizard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreationWizard.swift; sourceTree = "<group>"; };
 		A00000000000000000000023 /* GuestManagementViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuestManagementViews.swift; sourceTree = "<group>"; };
+		A00000000000000000000025 /* FirewallViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirewallViews.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -63,6 +65,7 @@
 				A00000000000000000000019 /* SchemaUI.swift */,
 				A00000000000000000000021 /* CreationWizard.swift */,
 				A00000000000000000000023 /* GuestManagementViews.swift */,
+				A00000000000000000000025 /* FirewallViews.swift */,
 				A00000000000000000000017 /* Assets.xcassets */,
 			);
 			path = ProxMobile;
@@ -143,6 +146,7 @@
 				A00000000000000000000018 /* SchemaUI.swift in Sources */,
 				A00000000000000000000020 /* CreationWizard.swift in Sources */,
 				A00000000000000000000022 /* GuestManagementViews.swift in Sources */,
+				A00000000000000000000024 /* FirewallViews.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

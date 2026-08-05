@@ -69,7 +69,7 @@ struct NativeAPIRootView: View {
     var body: some View {
         List {
             Section {
-                Text("Every operation and predefined parameter below comes from this Proxmox server's own API schema.")
+                Text("Management tools and available options automatically match this Proxmox server version.")
                     .font(.footnote).foregroundStyle(.secondary)
             }
             if search.isEmpty {
@@ -134,10 +134,10 @@ struct NativeAPIRootView: View {
                     }
                 }
 
-                Section("Complete API") {
+                Section("More") {
                     NavigationLink {
-                        NativeOperationsView(title: "All Operations", pathPrefix: "", knownValues: [:])
-                    } label: { Label("Browse Every Operation", systemImage: "list.bullet.rectangle") }
+                        NativeOperationsView(title: "All Server Features", pathPrefix: "", knownValues: [:])
+                    } label: { Label("All Server Features", systemImage: "list.bullet.rectangle") }
                 }
             } else {
                 operationList(operations)
@@ -329,7 +329,7 @@ private struct OperationRow: View {
                 if let description = operation.schema.description {
                     Text(description).font(.caption2).foregroundStyle(.secondary).lineLimit(2)
                 } else {
-                    Text(relativePath).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                    Text("Available for this resource").font(.caption).foregroundStyle(.secondary)
                 }
             }
         }.padding(.vertical, 3)
