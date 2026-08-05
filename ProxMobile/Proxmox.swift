@@ -73,6 +73,28 @@ struct ProxmoxTask: Decodable, Identifiable {
     var isRunning: Bool { endtime == nil }
     var result: String { isRunning ? "Running" : (status ?? "Unknown") }
     var started: Date? { starttime.map(Date.init(timeIntervalSince1970:)) }
+    var finished: Date? { endtime.map(Date.init(timeIntervalSince1970:)) }
+    var title: String {
+        let names = [
+            "qmstart": "Start virtual machine", "qmstop": "Stop virtual machine",
+            "qmshutdown": "Shut down virtual machine", "qmreboot": "Restart virtual machine",
+            "vzstart": "Start container", "vzstop": "Stop container",
+            "vzshutdown": "Shut down container", "vzreboot": "Restart container",
+            "vzdump": "Backup", "qmigrate": "Migrate virtual machine",
+            "vzmigrate": "Migrate container", "qmclone": "Clone virtual machine",
+            "vzclone": "Clone container", "qmdestroy": "Delete virtual machine",
+            "vzdestroy": "Delete container", "qmcreate": "Create virtual machine",
+            "vzcreate": "Create container", "qmconfig": "Update virtual machine",
+            "vzconfig": "Update container", "qmsnapshot": "Create virtual machine snapshot",
+            "vzsnapshot": "Create container snapshot", "qmrollback": "Restore virtual machine snapshot",
+            "vzrollback": "Restore container snapshot", "download": "Download",
+            "imgdownload": "Download disk image", "aptupdate": "Refresh package information",
+            "startall": "Start all guests", "stopall": "Stop all guests",
+            "vncproxy": "Open console", "vncshell": "Open node console",
+            "termproxy": "Open terminal", "spiceproxy": "Open SPICE console"
+        ]
+        return names[type] ?? type.replacingOccurrences(of: "_", with: " ").capitalized
+    }
 }
 
 struct ProxmoxSnapshot {

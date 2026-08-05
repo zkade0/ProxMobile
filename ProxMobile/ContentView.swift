@@ -3,25 +3,31 @@ import WebKit
 
 struct ContentView: View {
     @EnvironmentObject private var model: ProxmoxModel
-    @State private var selection = 0
+    @State private var selection = Int(ProcessInfo.processInfo.environment["PROXMOBILE_START_TAB"] ?? "") ?? 0
 
     var body: some View {
-        TabView(selection: $selection) {
-            NavigationStack { OverviewView() }
-                .tabItem { Label("Overview", systemImage: "square.grid.2x2") }
-                .tag(0)
-            NavigationStack { ResourcesView() }
-                .tabItem { Label("Resources", systemImage: "server.rack") }
-                .tag(1)
-            NavigationStack { TasksView() }
-                .tabItem { Label("Tasks", systemImage: "clock.arrow.circlepath") }
-                .tag(2)
-            NavigationStack { NativeAPIRootView() }
-                .tabItem { Label("Manage", systemImage: "wrench.and.screwdriver") }
-                .tag(3)
-            NavigationStack { SettingsView() }
-                .tabItem { Label("Settings", systemImage: "gear") }
-                .tag(4)
+        Group {
+            if let node = ProcessInfo.processInfo.environment["PROXMOBILE_DISKS_NODE"] {
+                NavigationStack { DiskListView(node: node) }
+            } else {
+                TabView(selection: $selection) {
+                    NavigationStack { OverviewView() }
+                        .tabItem { Label("Overview", systemImage: "square.grid.2x2") }
+                        .tag(0)
+                    NavigationStack { ResourcesView() }
+                        .tabItem { Label("Resources", systemImage: "server.rack") }
+                        .tag(1)
+                    NavigationStack { TasksView() }
+                        .tabItem { Label("Tasks", systemImage: "clock.arrow.circlepath") }
+                        .tag(2)
+                    NavigationStack { NativeAPIRootView() }
+                        .tabItem { Label("Manage", systemImage: "wrench.and.screwdriver") }
+                        .tag(3)
+                    NavigationStack { SettingsView() }
+                        .tabItem { Label("Settings", systemImage: "gear") }
+                        .tag(4)
+                }
+            }
         }
         .tint(.cyan)
         .overlay {
@@ -155,7 +161,10 @@ private struct OverviewView: View {
                 ForEach(model.nodes) { ResourceRow(resource: $0) }
                 if !model.tasks.isEmpty {
                     Text("Recent Tasks").font(.title2.bold()).padding(.top, 10)
-                    ForEach(model.tasks.prefix(5)) { TaskRow(task: $0) }
+                    ForEach(model.tasks.prefix(5)) { task in
+                        NavigationLink { TaskDetailView(task: task) } label: { TaskRow(task: task) }
+                            .buttonStyle(.plain)
+                    }
                 }
             }
             .padding(.horizontal)
@@ -423,6 +432,8 @@ private struct ManagementDestinationView: View {
                 title: item.title,
                 base: String(item.path.dropLast("/rules".count))
             )
+        } else if item.path.hasSuffix("/disks/list") {
+            DiskListView(node: item.path.split(separator: "/").dropFirst().first.map(String.init) ?? "")
         } else {
             NativeEndpointView(item: item)
         }
@@ -530,7 +541,9 @@ private struct TasksView: View {
     @EnvironmentObject private var model: ProxmoxModel
 
     var body: some View {
-        List(model.tasks) { task in TaskRow(task: task) }
+        List(model.tasks) { task in
+            NavigationLink { TaskDetailView(task: task) } label: { TaskRow(task: task) }
+        }
             .navigationTitle("Tasks")
             .toolbar { RefreshButton() }
             .refreshable { await model.refresh() }
@@ -846,7 +859,7 @@ private struct TaskRow: View {
             Image(systemName: task.isRunning ? "progress.indicator" : (task.status == "OK" ? "checkmark.circle.fill" : "exclamationmark.triangle.fill"))
                 .foregroundStyle(task.isRunning ? .cyan : (task.status == "OK" ? .green : .orange))
             VStack(alignment: .leading, spacing: 2) {
-                Text(task.type).font(.headline)
+                Text(task.title).font(.headline)
                 Text("\(task.node) · \(task.user ?? "system")")
                     .font(.caption).foregroundStyle(.secondary)
             }

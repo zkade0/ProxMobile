@@ -14,6 +14,8 @@
 		A00000000000000000000020 /* CreationWizard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000021 /* CreationWizard.swift */; };
 		A00000000000000000000022 /* GuestManagementViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000023 /* GuestManagementViews.swift */; };
 		A00000000000000000000024 /* FirewallViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000025 /* FirewallViews.swift */; };
+		A00000000000000000000026 /* TaskDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000027 /* TaskDetailView.swift */; };
+		A00000000000000000000028 /* DiskViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000029 /* DiskViews.swift */; };
 		A00000000000000000000016 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000017 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
@@ -27,6 +29,8 @@
 		A00000000000000000000021 /* CreationWizard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreationWizard.swift; sourceTree = "<group>"; };
 		A00000000000000000000023 /* GuestManagementViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuestManagementViews.swift; sourceTree = "<group>"; };
 		A00000000000000000000025 /* FirewallViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirewallViews.swift; sourceTree = "<group>"; };
+		A00000000000000000000027 /* TaskDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskDetailView.swift; sourceTree = "<group>"; };
+		A00000000000000000000029 /* DiskViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiskViews.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -66,6 +70,8 @@
 				A00000000000000000000021 /* CreationWizard.swift */,
 				A00000000000000000000023 /* GuestManagementViews.swift */,
 				A00000000000000000000025 /* FirewallViews.swift */,
+				A00000000000000000000027 /* TaskDetailView.swift */,
+				A00000000000000000000029 /* DiskViews.swift */,
 				A00000000000000000000017 /* Assets.xcassets */,
 			);
 			path = ProxMobile;
@@ -147,6 +153,8 @@
 				A00000000000000000000020 /* CreationWizard.swift in Sources */,
 				A00000000000000000000022 /* GuestManagementViews.swift in Sources */,
 				A00000000000000000000024 /* FirewallViews.swift in Sources */,
+				A00000000000000000000026 /* TaskDetailView.swift in Sources */,
+				A00000000000000000000028 /* DiskViews.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
