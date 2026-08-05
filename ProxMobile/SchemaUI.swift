@@ -73,15 +73,14 @@ struct NativeAPIRootView: View {
                     .font(.footnote).foregroundStyle(.secondary)
             }
             if search.isEmpty {
-                if let createVM = operation(path: "/nodes/{node}/qemu", method: "POST"),
-                   let createCT = operation(path: "/nodes/{node}/lxc", method: "POST") {
+                if !model.nodes.isEmpty {
                     Section("Create") {
                         ForEach(model.nodes) { node in
                             NavigationLink {
-                                APIOperationForm(operation: createVM, knownValues: ["node": node.node ?? node.title])
+                                GuestCreationWizard(kind: .qemu, node: node.node ?? node.title)
                             } label: { Label("Create VM on \(node.title)", systemImage: "desktopcomputer") }
                             NavigationLink {
-                                APIOperationForm(operation: createCT, knownValues: ["node": node.node ?? node.title])
+                                GuestCreationWizard(kind: .lxc, node: node.node ?? node.title)
                             } label: { Label("Create Container on \(node.title)", systemImage: "shippingbox") }
                         }
                     }
@@ -353,9 +352,12 @@ struct APIOperationForm: View {
     @State private var isRunning = false
     @State private var confirming = false
     @State private var loadedCurrentValues = false
+    @State private var expandedParameters: [String: APIParameterSchema] = [:]
 
     private var parameters: [(String, APIParameterSchema)] {
-        (operation.schema.parameters?.properties ?? [:]).sorted {
+        var properties = (operation.schema.parameters?.properties ?? [:]).filter { !$0.key.contains("[n]") }
+        properties.merge(expandedParameters) { _, current in current }
+        return properties.sorted {
             let leftPath = operation.path.contains("{\($0.key)}")
             let rightPath = operation.path.contains("{\($1.key)}")
             if leftPath != rightPath { return leftPath }
@@ -533,6 +535,13 @@ struct APIOperationForm: View {
             for (name, value) in object where operation.schema.parameters?.properties?[name] != nil {
                 values[name] = value.text
             }
+            let templates = operation.schema.parameters?.properties ?? [:]
+            for (name, value) in object where templates[name] == nil {
+                if let template = templates.first(where: { wildcard($0.key, matches: name) })?.value {
+                    expandedParameters[name] = template
+                    values[name] = value.text
+                }
+            }
             loadedCurrentValues = true
         } catch { if !silent { model.errorMessage = error.localizedDescription } }
     }
@@ -573,10 +582,20 @@ private struct ParameterField: View {
     let parameter: APIParameterSchema
     let dynamicChoices: [String]
     @Binding var value: String
+    @State private var showingCompoundEditor = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
-            if parameter.type == "boolean" {
+            if parameter.compoundSchema != nil {
+                Button {
+                    showingCompoundEditor = true
+                } label: {
+                    LabeledContent(fieldLabel(name)) {
+                        Text(value.isEmpty ? "Configure" : compoundSummary(value))
+                            .foregroundStyle(.secondary).lineLimit(2).multilineTextAlignment(.trailing)
+                    }
+                }.buttonStyle(.plain)
+            } else if parameter.type == "boolean" {
                 Toggle(isOn: Binding(get: { value == "1" }, set: { value = $0 ? "1" : "0" })) {
                     fieldTitle
                 }
@@ -603,6 +622,11 @@ private struct ParameterField: View {
                 Text(type).font(.caption2).foregroundStyle(.secondary)
             }
         }.padding(.vertical, 2)
+        .sheet(isPresented: $showingCompoundEditor) {
+            if let schema = parameter.compoundSchema {
+                CompoundParameterEditor(title: fieldLabel(name), schema: schema, value: $value)
+            }
+        }
     }
 
     private var fieldTitle: some View {
@@ -622,6 +646,147 @@ private struct ParameterField: View {
         let schemaChoices = parameter.choices?.map(\.text) ?? []
         return schemaChoices.isEmpty ? dynamicChoices : schemaChoices
     }
+}
+
+private extension APIParameterSchema {
+    var compoundSchema: [String: JSONValue]? {
+        guard case .object(let object) = format else { return nil }
+        return object
+    }
+}
+
+private struct CompoundParameterEditor: View {
+    @Environment(\.dismiss) private var dismiss
+    let title: String
+    let schema: [String: JSONValue]
+    @Binding var value: String
+    @State private var parts: [String: String]
+
+    init(title: String, schema: [String: JSONValue], value: Binding<String>) {
+        self.title = title
+        self.schema = schema
+        self._value = value
+        _parts = State(initialValue: parseCompound(value.wrappedValue, schema: schema))
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                ForEach(schema.keys.sorted { compoundOrder($0, schema: schema) < compoundOrder($1, schema: schema) }, id: \.self) { key in
+                    if case .object(let definition) = schema[key] {
+                        CompoundSubfield(name: key, definition: definition, value: partBinding(key))
+                    }
+                }
+                Section {
+                    Button("Clear Configuration", role: .destructive) { value = ""; dismiss() }
+                }
+            }
+            .navigationTitle(title)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { value = serializeCompound(parts, schema: schema); dismiss() }
+                }
+            }
+        }
+    }
+
+    private func partBinding(_ key: String) -> Binding<String> {
+        Binding(get: { parts[key] ?? "" }, set: { parts[key] = $0 })
+    }
+}
+
+private struct CompoundSubfield: View {
+    let name: String
+    let definition: [String: JSONValue]
+    @Binding var value: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            if type == "boolean" {
+                Toggle(fieldLabel(name), isOn: Binding(get: { value == "1" }, set: { value = $0 ? "1" : "0" }))
+            } else if !choices.isEmpty {
+                Picker(fieldLabel(name), selection: $value) {
+                    if isOptional { Text("Not set").tag("") }
+                    ForEach(choices, id: \.self) { Text(friendlyChoice($0)).tag($0) }
+                }
+            } else if name.lowercased().contains("password") || name.lowercased().contains("secret") {
+                SecureField(fieldLabel(name), text: $value)
+            } else {
+                TextField(fieldLabel(name), text: $value)
+                    .keyboardType(type == "integer" || type == "number" ? .numbersAndPunctuation : .default)
+                    .textInputAutocapitalization(.never).autocorrectionDisabled()
+            }
+            if let description = definition["description"]?.text, !description.isEmpty {
+                Text(description).font(.caption2).foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private var type: String { definition["type"]?.text ?? "string" }
+    private var isOptional: Bool { definition["optional"]?.text == "1" }
+    private var choices: [String] {
+        guard case .array(let values) = definition["enum"] else { return [] }
+        return values.map(\.text)
+    }
+}
+
+private func parseCompound(_ value: String, schema: [String: JSONValue]) -> [String: String] {
+    var result: [String: String] = [:]
+    let defaultKey = schema.first { _, value in
+        guard case .object(let object) = value else { return false }
+        return object["default_key"]?.text == "1"
+    }?.key
+    for (index, component) in value.split(separator: ",", omittingEmptySubsequences: false).enumerated() {
+        let text = String(component).trimmingCharacters(in: .whitespaces)
+        if let separator = text.firstIndex(of: "=") {
+            result[String(text[..<separator])] = String(text[text.index(after: separator)...])
+        } else if index == 0, let defaultKey, !text.isEmpty {
+            result[defaultKey] = text
+        }
+    }
+    for (key, definition) in schema where result[key] == nil {
+        guard case .object(let object) = definition else { continue }
+        if object["optional"]?.text != "1", let defaultValue = object["default"]?.text { result[key] = defaultValue }
+    }
+    return result
+}
+
+private func serializeCompound(_ parts: [String: String], schema: [String: JSONValue]) -> String {
+    let defaultKey = schema.first { _, value in
+        guard case .object(let object) = value else { return false }
+        return object["default_key"]?.text == "1"
+    }?.key
+    var values: [String] = []
+    if let defaultKey, let value = parts[defaultKey], !value.isEmpty { values.append(value) }
+    values += parts.keys.sorted().compactMap { key in
+        guard key != defaultKey, let value = parts[key], !value.isEmpty else { return nil }
+        return "\(key)=\(value)"
+    }
+    return values.joined(separator: ",")
+}
+
+private func compoundSummary(_ value: String) -> String {
+    let pieces = value.split(separator: ",")
+    return pieces.prefix(2).joined(separator: " · ") + (pieces.count > 2 ? " · …" : "")
+}
+
+private func compoundOrder(_ key: String, schema: [String: JSONValue]) -> String {
+    guard case .object(let object) = schema[key] else { return "2-\(key)" }
+    if object["default_key"]?.text == "1" { return "0-\(key)" }
+    if object["optional"]?.text != "1" { return "1-\(key)" }
+    return "2-\(key)"
+}
+
+private func friendlyChoice(_ value: String) -> String {
+    value.replacingOccurrences(of: "_", with: " ").replacingOccurrences(of: "-", with: " ").capitalized
+}
+
+private func wildcard(_ pattern: String, matches value: String) -> Bool {
+    guard pattern.contains("[n]") else { return false }
+    let escaped = NSRegularExpression.escapedPattern(for: pattern).replacingOccurrences(of: "\\[n\\]", with: "[0-9]+")
+    return value.range(of: "^(?:\(escaped))$", options: .regularExpression) != nil
 }
 
 private func parameterGroup(for name: String, required: Bool) -> String {

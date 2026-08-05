@@ -323,6 +323,14 @@ private struct ResourceDetailView: View {
                         )
                     } label: { Label("All Predefined Settings", systemImage: "slider.horizontal.3") }
                 }
+                Section("Guest Management") {
+                    NavigationLink { SnapshotManagerView(resource: resource) } label: { Label("Snapshots", systemImage: "camera.filters") }
+                    NavigationLink { BackupGuestView(resource: resource) } label: { Label("Back Up Now", systemImage: "externaldrive.badge.timemachine") }
+                    NavigationLink { CloneGuestView(resource: resource) } label: { Label("Clone", systemImage: "plus.square.on.square") }
+                    if model.nodes.count > 1 {
+                        NavigationLink { MigrateGuestView(resource: resource) } label: { Label("Migrate", systemImage: "arrow.right.circle") }
+                    }
+                }
             }
             if let scope = nativeScope(for: resource) {
                 Section("Native Management") {
